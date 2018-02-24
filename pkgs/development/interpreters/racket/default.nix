@@ -3,7 +3,9 @@
 , glib, gmp, gtk2, libedit, libffi
 , libiconv
 , libjpeg
-, libpng, libtool, mpfr, openssl, pango, poppler
+, libpng
+, libX11
+, libtool, mpfr, openssl, pango, poppler
 , readline, sqlite
 , disableDocs ? false
 , CoreFoundation
@@ -15,7 +17,7 @@ let
     fontDirectories = [ freefont_ttf ];
   };
 
-  libPath = stdenv.lib.makeLibraryPath [
+  dynamicInputs = [
     cairo
     fontconfig
     glib
@@ -30,7 +32,10 @@ let
     poppler
     readline
     sqlite
-  ];
+  ]
+    ++ stdenv.lib.optionals stdenv.isDarwin [ libX11 ];
+
+  libPath = stdenv.lib.makeLibraryPath dynamicInputs;
 
 in
 
