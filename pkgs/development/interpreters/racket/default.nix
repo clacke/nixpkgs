@@ -1,7 +1,11 @@
 { stdenv, fetchurl, makeFontsConf, makeWrapper
 , cairo, coreutils, fontconfig, freefont_ttf
-, glib, gmp, gtk2, libedit, libffi, libjpeg
-, libpng, libtool, mpfr, openssl, pango, poppler
+, glib, gmp, gtk2, libedit, libffi
+, libiconv
+, libjpeg
+, libpng
+, libX11
+, libtool, mpfr, openssl, pango, poppler
 , readline, sqlite
 , disableDocs ? false
 , CoreFoundation
@@ -13,7 +17,7 @@ let
     fontDirectories = [ freefont_ttf ];
   };
 
-  libPath = stdenv.lib.makeLibraryPath [
+  dynamicInputs = [
     cairo
     fontconfig
     glib
@@ -28,7 +32,10 @@ let
     poppler
     readline
     sqlite
-  ];
+  ]
+    ++ stdenv.lib.optionals stdenv.isDarwin [ libX11 ];
+
+  libPath = stdenv.lib.makeLibraryPath dynamicInputs;
 
 in
 
@@ -54,7 +61,7 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [ fontconfig libffi libtool makeWrapper sqlite ]
-    ++ stdenv.lib.optionals stdenv.isDarwin [ CoreFoundation ];
+    ++ stdenv.lib.optionals stdenv.isDarwin [ libiconv CoreFoundation ];
 
   preConfigure = ''
     unset AR
@@ -92,6 +99,6 @@ stdenv.mkDerivation rec {
     homepage = http://racket-lang.org/;
     license = licenses.lgpl3;
     maintainers = with maintainers; [ kkallio henrytill vrthra ];
-    platforms = [ "x86_64-linux" ];
+    platforms = [ "x86_64-darwin" "x86_64-linux" ];
   };
 }
