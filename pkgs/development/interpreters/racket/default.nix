@@ -54,7 +54,6 @@ stdenv.mkDerivation rec {
   };
 
   FONTCONFIG_FILE = fontsConf;
-  LD_LIBRARY_PATH = libPath;
   NIX_LDFLAGS = stdenv.lib.concatStringsSep " " [
     (stdenv.lib.optionalString (stdenv.cc.isGNU && ! stdenv.isDarwin) "-lgcc_s")
     (stdenv.lib.optionalString stdenv.isDarwin "-framework CoreFoundation")
@@ -79,9 +78,13 @@ stdenv.mkDerivation rec {
 
   enableParallelBuilding = false;
 
-  postInstall = ''
+  postInstall = if stdenv.isDarwin then ''
     for p in $(ls $out/bin/) ; do
-      wrapProgram $out/bin/$p --set LD_LIBRARY_PATH "${LD_LIBRARY_PATH}";
+      wrapProgram $out/bin/$p --set DYLD_LIBRARY_PATH "${libPath}";
+    done
+  '' else ''
+    for p in $(ls $out/bin/) ; do
+      wrapProgram $out/bin/$p --set LD_LIBRARY_PATH "${libPath}";
     done
   '';
 
@@ -101,4 +104,7 @@ stdenv.mkDerivation rec {
     maintainers = with maintainers; [ kkallio henrytill vrthra ];
     platforms = [ "x86_64-darwin" "x86_64-linux" ];
   };
-}
+} // (if stdenv.isDarwin then
+        { DYLD_LIBRARY_PATH = libPath; }
+      else
+        { LD_LIBRARY_PATH = libPath; })
