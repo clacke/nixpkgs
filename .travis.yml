@@ -5,13 +5,8 @@ sudo: false
 # ..as per:  https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
 # Nixpkgs PR tests OOM with 4G: https://github.com/NixOS/nixpkgs/issues/24200
 
-matrix:
-    include:
-        - os: osx
-          osx_image: xcode7.3
-          script: nix-shell -p nox --run 'nox-review wip --against HEAD^'
-          env:
-            - BUILD_TYPE="Build affected packages (macOS)"
+os: osx
+script: nix-shell -p nox --run 'nox-review wip --against HEAD^'
 
 notifications:
     email: false
