@@ -1,0 +1,17 @@
+language: nix
+sudo: false
+# 'sudo: false' == containers that start fast, but only get 4G ram;
+# 'sudo: true'  == VMs that start slow, but with 8G
+# ..as per:  https://docs.travis-ci.com/user/ci-environment/#Virtualization-environments
+# Nixpkgs PR tests OOM with 4G: https://github.com/NixOS/nixpkgs/issues/24200
+
+matrix:
+    include:
+        - os: osx
+          osx_image: xcode7.3
+          script: nix-shell -p nox --run 'nox-review wip --against HEAD^'
+          env:
+            - BUILD_TYPE="Build affected packages (macOS)"
+
+notifications:
+    email: false
