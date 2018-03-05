@@ -6,7 +6,7 @@ sudo: false
 # Nixpkgs PR tests OOM with 4G: https://github.com/NixOS/nixpkgs/issues/24200
 
 os: osx
-script: nix-build -A racket
+script: ./travis-test.sh
 
 notifications:
     email: false
