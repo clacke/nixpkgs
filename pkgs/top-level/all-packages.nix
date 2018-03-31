@@ -3136,7 +3136,7 @@ with pkgs;
 
   keepalived = callPackage ../tools/networking/keepalived { };
 
-  kexectools = callPackage ../os-specific/linux/kexectools { };
+  kexectools = if stdenv.isLinux then callPackage ../os-specific/linux/kexectools { } else null;
 
   keybase = callPackage ../tools/security/keybase { };
 
@@ -9821,7 +9821,7 @@ with pkgs;
 
   libgroove = callPackage ../development/libraries/libgroove { };
 
-  libseccomp = callPackage ../development/libraries/libseccomp { };
+  libseccomp = if stdenv.isLinux then callPackage ../development/libraries/libseccomp { } else null;
 
   libsecret = callPackage ../development/libraries/libsecret { };
 
