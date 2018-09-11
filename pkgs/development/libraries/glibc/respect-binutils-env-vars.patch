@@ -1,0 +1,28 @@
+--- a/configure
++++ b/configure
+@@ -4388,10 +4388,22 @@ if test -n "$path_binutils"; then
+     path_binutils=`(cd $path_binutils; pwd) | sed 's%/*$%/%'`
+     CC="$CC -B$path_binutils"
+ fi
+-AS=`$CC -print-prog-name=as`
+-LD=`$CC -print-prog-name=ld`
+-AR=`$CC -print-prog-name=ar`
++if test "x$AS" != x; then
++  AS=`command -v "$AS"`
++else
++  AS=`$CC -print-prog-name=as`
++fi
++if test "x$LD" != x; then
++  LD=`command -v "$LD"`
++else
++  LD=`$CC -print-prog-name=ld`
++fi
++if test "x$AR" != x; then
++  AR=`command -v "$AR"`
++else
++  AR=`$CC -print-prog-name=ar`
++fi
+
+ OBJDUMP=`$CC -print-prog-name=objdump`
+ 
+ OBJCOPY=`$CC -print-prog-name=objcopy`

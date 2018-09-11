@@ -19,10 +19,10 @@
 
 { stdenv, lib
 , buildPackages
-, fetchurl ? null
+, fetchurl ? null, fetchpatch
 , linuxHeaders ? null
 , gd ? null, libpng ? null
-, bison
+, bison, gettext
 }:
 
 { name
@@ -88,6 +88,31 @@ stdenv.mkDerivation ({
         less linux-*?/arch/x86/kernel/syscall_table_32.S
        */
       ./allow-kernel-2.6.32.patch
+
+      # Allow building on case-insensative filesystems.
+      # https://sourceware.org/bugzilla/show_bug.cgi?id=72
+      (fetchpatch {
+        url = "https://sourceware.org/bugzilla/attachment.cgi?id=11236";
+        sha256 = "1cpknnjkyyxnb1nzsx8j069bg38y2j6ybbj4iz8rldp7dgvqhwlc";
+      })
+
+      # Respect binutils environment variables
+      #
+      # `$CC -print-prog-name=ar` isn't working right on cross. This causes the
+      # wrong `ar` to be used. As far as I can tell, the others work becase they
+      # appear in GCC's special search path. cc-wrapper does symlink ld and as
+      # to a directory it gives the C compiler a `-B` flag to.
+      #
+      # Now, arguably GCC should be tought how to use a prefix when falling back
+      # on the PATH or something, but in the shorter term there should be a way
+      # to opt-out of this. There is a `--with-binutils` flag which causes glibc
+      # to add its own `-B` flag, but this interferes with binutils-wrapper: we
+      # either get no `ar` or unwrapped `ld`.
+      #
+      # This patch causes those variables to be left alone if they are already
+      # non-empty, which seems like a fine work around consistent with most
+      # autoconf-based configure scripts to me.
+      ./respect-binutils-env-vars.patch
     ]
     ++ lib.optional stdenv.isx86_64 ./fix-x64-abi.patch
     ++ lib.optional stdenv.hostPlatform.isMusl ./fix-rpc-types-musl-conflicts.patch;
@@ -132,7 +157,7 @@ stdenv.mkDerivation ({
   outputs = [ "out" "bin" "dev" "static" ];
 
   depsBuildBuild = [ buildPackages.stdenv.cc ];
-  nativeBuildInputs = [ bison ];
+  nativeBuildInputs = [ bison gettext ];
   buildInputs = [ linuxHeaders ] ++ lib.optionals withGd [ gd libpng ];
 
   # Needed to install share/zoneinfo/zone.tab.  Set to impure /bin/sh to
@@ -172,6 +197,10 @@ stdenv.mkDerivation ({
     }
 
 
+  ''
+  # https://github.com/crosstool-ng/crosstool-ng/issues/591
+  + lib.optionalString (stdenv.buildPlatform.isDarwin) ''
+    ulimit -n 2048
   '' + lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
     sed -i s/-lgcc_eh//g "../$sourceRoot/Makeconfig"
 
