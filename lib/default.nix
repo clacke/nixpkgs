@@ -63,7 +63,7 @@ let
       splitByAndCompare functionArgs setFunctionArgs isFunction;
 
     inherit (fixedPoints) fix fix' extends composeExtensions
-      makeExtensible makeExtensibleWithCustomName;
+      makeExtensible;
     inherit (attrsets) attrByPath hasAttrByPath setAttrByPath
       getAttrFromPath attrVals attrValues catAttrs filterAttrs
       filterAttrsRecursive foldAttrs collect nameValuePair mapAttrs
