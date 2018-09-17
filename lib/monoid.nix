@@ -14,4 +14,6 @@
     append = lib.trivial.mergeAttrs;
   };
 
+  inherit (lib.overrides) monoidalExtension extensibleAttrset;
+
 }

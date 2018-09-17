@@ -21,6 +21,7 @@ let
     strings = callLibs ./strings.nix;
     stringsWithDeps = callLibs ./strings-with-deps.nix;
     monoid = callLibs ./monoid.nix;
+    overrides = callLibs ./overrides.nix;
 
     # packaging
     customisation = callLibs ./customisation.nix;
@@ -62,8 +63,7 @@ let
       importJSON warn info nixpkgsVersion version mod compare
       splitByAndCompare functionArgs setFunctionArgs isFunction;
 
-    inherit (fixedPoints) fix fix' extends composeExtensions
-      makeExtensible;
+    inherit (fixedPoints) fix fix';
     inherit (attrsets) attrByPath hasAttrByPath setAttrByPath
       getAttrFromPath attrVals attrValues catAttrs filterAttrs
       filterAttrsRecursive foldAttrs collect nameValuePair mapAttrs
@@ -91,6 +91,7 @@ let
       toInt readPathsFromFile fileContents;
     inherit (stringsWithDeps) textClosureList textClosureMap
       noDepEntry fullDepEntry packEntry stringAfter;
+    inherit (overrides) extends composeExtensions makeExtensible;
     inherit (customisation) overrideDerivation makeOverridable
       callPackageWith callPackagesWith extendDerivation hydraJob
       makeScope;
