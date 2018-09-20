@@ -31,6 +31,8 @@ let
 
   git = appendToName "minimal" gitBase;
 
+  git-appraise = callPackage ./git-appraise {};
+
   git-fame = callPackage ./git-fame {};
 
   # The full-featured Git.
@@ -110,6 +112,8 @@ let
   };
 
   hubUnstable = throw "use gitAndTools.hub instead";
+
+  pre-commit = callPackage ./pre-commit { };
 
   qgit = qt5.callPackage ./qgit { };
 

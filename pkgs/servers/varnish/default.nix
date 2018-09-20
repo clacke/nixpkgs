@@ -1,5 +1,5 @@
 { stdenv, fetchurl, pcre, libxslt, groff, ncurses, pkgconfig, readline, libedit
-, python, pythonPackages, makeWrapper }:
+, python2, makeWrapper }:
 
 let
   common = { version, sha256 }:
@@ -13,8 +13,8 @@ let
 
       nativeBuildInputs = [ pkgconfig ];
       buildInputs = [
-        pcre libxslt groff ncurses readline python libedit
-        pythonPackages.docutils makeWrapper
+        pcre libxslt groff ncurses readline python2 libedit
+        python2.pkgs.docutils makeWrapper
       ];
 
       buildFlags = "localstatedir=/var/spool";
@@ -47,7 +47,7 @@ in
     sha256 = "1cqlj12m426c1lak1hr1fx5zcfsjjvka3hfirz47hvy1g2fjqidq";
   };
   varnish6 = common {
-    version = "6.0.0";
-    sha256 = "1vhbdch33m6ig4ijy57zvrramhs9n7cba85wd8rizgxjjnf87cn7";
+    version = "6.0.1";
+    sha256 = "1f7k751r31sgfvr1ns6s3h48c5x06kkps1p6zd40wvylm56qxwj7";
   };
 }

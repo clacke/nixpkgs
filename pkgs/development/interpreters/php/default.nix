@@ -3,20 +3,19 @@
 , mysql, libxml2, readline, zlib, curl, postgresql, gettext
 , openssl, pcre, pkgconfig, sqlite, config, libjpeg, libpng, freetype
 , libxslt, libmcrypt, bzip2, icu, openldap, cyrus_sasl, libmhash, freetds
-, uwimap, pam, gmp, apacheHttpd, libiconv, systemd, libsodium, html-tidy
+, uwimap, pam, gmp, apacheHttpd, libiconv, systemd, libsodium, html-tidy, libargon2
 }:
 
 with lib;
 
 let
-  php7 = versionAtLeast version "7.0";
   generic =
   { version
   , sha256
   , imapSupport ? config.php.imap or (!stdenv.isDarwin)
   , ldapSupport ? config.php.ldap or true
   , mhashSupport ? config.php.mhash or true
-  , mysqlSupport ? (config.php.mysql or true) && (!php7)
+  , mysqlSupport ? (config.php.mysql or true)
   , mysqlndSupport ? config.php.mysqlnd or true
   , mysqliSupport ? config.php.mysqli or true
   , pdo_mysqlSupport ? config.php.pdo_mysql or true
@@ -26,7 +25,7 @@ let
   , bcmathSupport ? config.php.bcmath or true
   , socketsSupport ? config.php.sockets or true
   , curlSupport ? config.php.curl or true
-  , curlWrappersSupport ? (config.php.curlWrappers or true) && (!php7)
+  , curlWrappersSupport ? config.php.curlWrappers or true
   , gettextSupport ? config.php.gettext or true
   , pcntlSupport ? config.php.pcntl or true
   , postgresqlSupport ? config.php.postgresql or true
@@ -38,7 +37,10 @@ let
   , opensslSupport ? config.php.openssl or true
   , mbstringSupport ? config.php.mbstring or true
   , gdSupport ? config.php.gd or true
-  , intlSupport ? config.php.intl or true
+  # Because of an upstream bug: https://bugs.php.net/bug.php?id=76826
+  # We need to disable the intl support on darwin. Whenever the upstream bug is
+  # fixed we should revert this to just just "config.php.intl or true".
+  , intlSupport ? (config.php.intl or true) && (!stdenv.isDarwin)
   , exifSupport ? config.php.exif or true
   , xslSupport ? config.php.xsl or false
   , mcryptSupport ? config.php.mcrypt or true
@@ -47,11 +49,12 @@ let
   , ftpSupport ? config.php.ftp or true
   , fpmSupport ? config.php.fpm or true
   , gmpSupport ? config.php.gmp or true
-  , mssqlSupport ? (config.php.mssql or (!stdenv.isDarwin)) && (!php7)
+  , mssqlSupport ? config.php.mssql or (!stdenv.isDarwin)
   , ztsSupport ? config.php.zts or false
   , calendarSupport ? config.php.calendar or true
   , sodiumSupport ? (config.php.sodium or true) && (versionAtLeast version "7.2")
   , tidySupport ? (config.php.tidy or false)
+  , argon2Support ? (config.php.argon2 or true) && (versionAtLeast version "7.2")
   }:
 
     let
@@ -93,7 +96,8 @@ let
         ++ optional bz2Support bzip2
         ++ optional (mssqlSupport && !stdenv.isDarwin) freetds
         ++ optional sodiumSupport libsodium
-        ++ optional tidySupport html-tidy;
+        ++ optional tidySupport html-tidy
+        ++ optional argon2Support libargon2;
 
       CXXFLAGS = optional stdenv.cc.isClang "-std=c++11";
 
@@ -158,7 +162,8 @@ let
       ++ optional ztsSupport "--enable-maintainer-zts"
       ++ optional calendarSupport "--enable-calendar"
       ++ optional sodiumSupport "--with-sodium=${libsodium.dev}"
-      ++ optional tidySupport "--with-tidy=${html-tidy}";
+      ++ optional tidySupport "--with-tidy=${html-tidy}"
+      ++ optional argon2Support "--with-password-argon2=${libargon2}";
 
 
       hardeningDisable = [ "bindnow" ];
@@ -207,7 +212,7 @@ let
         outputsToInstall = [ "out" "dev" ];
       };
 
-      patches = if !php7 then [ ./fix-paths.patch ] else [ ./fix-paths-php7.patch ];
+      patches = [ ./fix-paths-php7.patch ];
 
       postPatch = optional stdenv.isDarwin ''
         substituteInPlace configure --replace "-lstdc++" "-lc++"
@@ -220,23 +225,13 @@ let
     };
 
 in {
-  php56 = generic {
-    version = "5.6.36";
-    sha256 = "0ahp9vk33dpsqgld0gg4npff67v0l39hs3wk5dm6h3lablzhwsk2";
-  };
-
-  php70 = generic {
-    version = "7.0.30";
-    sha256 = "0l0bhnlgxmfl7mrdykmxfl53simxsksdcnbg5ymqz6r31i03hgr1";
-  };
-
   php71 = generic {
-    version = "7.1.19";
-    sha256 = "1wvhsxzmb78pcr36ginz93iv7rcrxp3p01rb34zxa2h4wdxkxi0k";
+    version = "7.1.22";
+    sha256 = "0qz74qdlk19cw478f42ckyw5r074y0fg73r2bzlhm0dar0cizsf8";
   };
 
   php72 = generic {
-    version = "7.2.8";
-    sha256 = "1rky321gcvjm0npbfd4bznh36an0y14viqcvn4yzy3x643sni00z";
+    version = "7.2.10";
+    sha256 = "17fsvdi6ihjghjsz9kk2li2rwrknm2ccb6ys0xmn789116d15dh1";
   };
 }

@@ -3,6 +3,7 @@
 , openjdk ? null # javacSupport
 , unixODBC ? null # odbcSupport
 , libGLU_combined ? null, wxGTK ? null, wxmac ? null, xorg ? null # wxSupport
+, withSystemd ? stdenv.isLinux, systemd # systemd support in epmd
 }:
 
 { baseName ? "erlang"
@@ -53,9 +54,12 @@ in stdenv.mkDerivation ({
     ++ optionals wxSupport wxPackages2
     ++ optionals odbcSupport odbcPackages
     ++ optionals javacSupport javacPackages
+    ++ optional withSystemd systemd
     ++ optionals stdenv.isDarwin (with pkgs.darwin.apple_sdk.frameworks; [ Carbon Cocoa ]);
 
   debugInfo = enableDebugInfo;
+
+  enableParallelBuilding = true;
 
   # Clang 4 (rightfully) thinks signed comparisons of pointers with NULL are nonsense
   prePatch = ''
@@ -82,6 +86,7 @@ in stdenv.mkDerivation ({
     ++ optional javacSupport "--with-javac"
     ++ optional odbcSupport "--with-odbc=${unixODBC}"
     ++ optional wxSupport "--enable-wx"
+    ++ optional withSystemd "--enable-systemd"
     ++ optional stdenv.isDarwin "--enable-darwin-64bit";
 
   # install-docs will generate and install manpages and html docs
