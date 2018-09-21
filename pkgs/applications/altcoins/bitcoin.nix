@@ -1,6 +1,16 @@
-{ stdenv, fetchurl, pkgconfig, autoreconfHook, openssl, db48, boost, zeromq
-, zlib, miniupnpc, qtbase ? null, qttools ? null, utillinux, protobuf, qrencode, libevent
-, withGui }:
+{ stdenv
+
+# Build time
+, fetchurl, pkgconfig, autoreconfHook, hexdump
+
+# Run time
+, openssl, db48, boost, zeromq, zlib, miniupnpc, qtbase ? null, qttools ? null
+, utillinux, protobuf, qrencode, libevent
+
+# Options
+, withGui
+, enableWallet ? !stdenv.hostPlatform.isWindows
+}:
 
 with stdenv.lib;
 stdenv.mkDerivation rec{
@@ -14,16 +24,22 @@ stdenv.mkDerivation rec{
     sha256 = "1n07qykx5hc0ph8fwn7hfrbsrjv19fdzvs5h0nysq4wfgn5wa40r";
   };
 
-  nativeBuildInputs = [ pkgconfig autoreconfHook ];
-  buildInputs = [ openssl db48 boost zlib zeromq
-                  miniupnpc protobuf libevent]
-                  ++ optionals stdenv.isLinux [ utillinux ]
-                  ++ optionals withGui [ qtbase qttools qrencode ];
+  nativeBuildInputs = [ pkgconfig autoreconfHook hexdump ];
+  buildInputs = [
+    boost
+  ] ++ optionals (!stdenv.hostPlatform.isWindows) [
+    openssl db48 zlib zeromq miniupnpc protobuf libevent
+  ] #++ optionals stdenv.isLinux [ utillinux ]
+    ++ optionals withGui [ qtbase qttools qrencode ];
 
-  configureFlags = [ "--with-boost-libdir=${boost.out}/lib" ]
-                     ++ optionals withGui [ "--with-gui=qt5"
-                                            "--with-qt-bindir=${qtbase.dev}/bin:${qttools.dev}/bin"
-                                          ];
+  configureFlags = [
+    (enableFeature enableWallet "wallet")
+  ] ++ optionals (!stdenv.hostPlatform.isWindows) [
+    "--with-boost-libdir=${boost.out}/lib"
+  ] ++ optionals withGui [
+    "--with-gui=qt5"
+    "--with-qt-bindir=${qtbase.dev}/bin:${qttools.dev}/bin"
+  ];
 
   # Fails with "This application failed to start because it could not
   # find or load the Qt platform plugin "minimal""
@@ -40,7 +56,9 @@ stdenv.mkDerivation rec{
     homepage = http://www.bitcoin.org/;
     maintainers = with maintainers; [ roconnor AndersonTorres ];
     license = licenses.mit;
+    broken = !(withGui -> enableWallet)
+      || (withGui && !stdenv.hostPlatform.isLinux);
     # bitcoin needs hexdump to build, which doesn't seem to build on darwin at the moment.
-    platforms = platforms.linux;
+    platforms = platforms.all;
   };
 }
