@@ -3,7 +3,7 @@
 , static ? false
 }:
 
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "zlib-${version}";
   version = "1.2.11";
 
@@ -28,7 +28,23 @@ stdenv.mkDerivation (rec {
   setOutputFlags = false;
   outputDoc = "dev"; # single tiny man3 page
 
+  # TODO: Clean up next mass rebuild
+  CHOST = if stdenv.hostPlatform == stdenv.buildPlatform
+          then null
+          else stdenv.hostPlatform.config;
+
   configureFlags = stdenv.lib.optional (!static) "--shared";
+
+  # On Windows there is evidentally nothing to configure. Running the configure
+  # script at all results in an error.
+  #
+  # TODO: We should have a `dontConfigure`, like the other phases do
+  configurePhase = if !stdenv.hostPlatform.isWindows then null else ":";
+
+  # TODO: Clean up next mass rebuild
+  makefile = if !stdenv.hostPlatform.isWindows
+             then null
+             else "win32/Makefile.gcc";
 
   postInstall = ''
     moveToOutput lib/libz.a "$static"
@@ -78,8 +94,4 @@ stdenv.mkDerivation (rec {
     license = licenses.zlib;
     platforms = platforms.all;
   };
-} // stdenv.lib.optionalAttrs (stdenv.hostPlatform != stdenv.buildPlatform) {
-  preConfigure = ''
-    export CHOST=${stdenv.hostPlatform.config}
-  '';
-})
+}
